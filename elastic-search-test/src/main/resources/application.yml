@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: toby-elasticsearch-test
+  data:    elasticsearch:      cluster-nodes: 127.0.0.1:9300
+      properties:        transport:
+          tcp:
+            connect_timeout: 120s
+            
+server:  servlet:    context-path: /
+  port: 8080
