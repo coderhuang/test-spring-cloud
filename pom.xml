@@ -6,6 +6,11 @@
 	<artifactId>test-spring-cloud</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
+	
+	<modules>
+		<module>gate-way-test</module>
+		<module>elastic-search-test</module>
+	</modules>
 
 	<properties>
 
@@ -176,8 +181,5 @@
 
 		</dependencies>
 	</dependencyManagement>
-	<modules>
-		<module>gate-way-test</module>
-		<module>elastic-search-test</module>
-	</modules>
+	
 </project>

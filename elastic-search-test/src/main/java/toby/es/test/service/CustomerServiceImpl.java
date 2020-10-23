@@ -23,6 +23,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -86,6 +87,7 @@ public class CustomerServiceImpl {
 		IndexRequest indexRequest = new IndexRequest(CUSTOMER_INDEX_NAME, CUSTOMER_INDEX_NAME,
 				customer.getId().toString());
 		indexRequest.source(map);
+		indexRequest.versionType(VersionType.INTERNAL);
 
 		return highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
 	}

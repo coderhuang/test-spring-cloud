@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -51,11 +52,14 @@ class CustomerServiceTest {
 
 	Random random = new Random();
 
+	private static AtomicLong atomicLong;
+
 	@BeforeAll
 	static void init() {
 		id = 301L;
 		List.of(1L, 2L);
 		iterate = LongStream.iterate(1L, l -> l + 1).limit(301);
+		atomicLong = new AtomicLong(1);
 	}
 
 	@TestFactory
@@ -127,8 +131,9 @@ class CustomerServiceTest {
 		boolQuery.filter(QueryBuilders.rangeQuery("age").gt(10).lt(130));
 		searchSourceBuilder.query(boolQuery);
 		searchSourceBuilder.sort(SortBuilders.fieldSort("id").order(SortOrder.DESC));
-//		searchSourceBuilder.aggregation(AggregationBuilders.max("maxAge").ter)
-		
+		searchSourceBuilder.aggregation(AggregationBuilders.max("maxAge").field("age")
+				.subAggregation(AggregationBuilders.count("").field("name")));
+
 		SearchResponse search = customerServiceImpl.search(searchSourceBuilder);
 		assertNotNull(search);
 		System.err.println(search);
