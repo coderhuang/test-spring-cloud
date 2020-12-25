@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -11,14 +12,26 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import javax.annotation.Resource;
+
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -34,6 +47,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import toby.es.test.ElasticSearchTestApplication;
 import toby.es.test.common.utils.RandomUtil;
 import toby.es.test.dao.entity.Customer;
@@ -45,6 +60,10 @@ class CustomerServiceTest {
 
 	@Autowired
 	private CustomerServiceImpl customerServiceImpl;
+	@Resource
+	private ObjectMapper objectMapper;
+	@Resource
+	private RestHighLevelClient highLevelClient;
 
 	static Long id;
 
@@ -120,6 +139,12 @@ class CustomerServiceTest {
 		SearchResponse searchAll = customerServiceImpl.searchAll();
 		assertNotNull(searchAll);
 		System.err.println(searchAll);
+		SearchHits hits = searchAll.getHits();
+		System.err.println(hits.getTotalHits());
+		SearchHit[] hits2 = hits.getHits();
+		for (SearchHit searchHit : hits2) {
+			System.err.println(searchHit);
+		}
 	}
 
 	@Test
@@ -130,13 +155,20 @@ class CustomerServiceTest {
 		boolQuery.should(QueryBuilders.matchQuery("name", "a"));
 		boolQuery.filter(QueryBuilders.rangeQuery("age").gt(10).lt(130));
 		searchSourceBuilder.query(boolQuery);
-		searchSourceBuilder.sort(SortBuilders.fieldSort("id").order(SortOrder.DESC));
+		searchSourceBuilder.sort(SortBuilders.fieldSort("_id").order(SortOrder.DESC));
 		searchSourceBuilder.aggregation(AggregationBuilders.max("maxAge").field("age")
-				.subAggregation(AggregationBuilders.count("").field("name")));
+		/* .subAggregation(AggregationBuilders.count("nameCount").field("name")) */);
+		searchSourceBuilder.docValueField("age");
+		searchSourceBuilder.docValueField("createTime", "yyyy-MM-dd HH:mm:ss");
+		searchSourceBuilder.size(20);
 
 		SearchResponse search = customerServiceImpl.search(searchSourceBuilder);
 		assertNotNull(search);
 		System.err.println(search);
+		for (SearchHit searchHit : search.getHits().getHits()) {
+			System.err.println(searchHit);
+		}
+		System.err.println(search.getAggregations().get("maxAge"));
 	}
 
 	@Test
@@ -186,6 +218,50 @@ class CustomerServiceTest {
 		GetResponse getResponse = customerServiceImpl.get(1L);
 		assertNotNull(getResponse);
 		System.err.println(getResponse);
+	}
+
+	@Test
+	void testUpdateWithScript() throws Exception {
+
+		GetResponse getResponse = customerServiceImpl.get(1L);
+		assertNotNull(getResponse);
+		byte[] customerInfoBytes = getResponse.getSourceAsBytes();
+		System.err.println(getResponse);
+		var customer = objectMapper.readValue(customerInfoBytes, Customer.class);
+
+		customer.setId(Long.valueOf(getResponse.getId()));
+		String indexName = "customer";
+		String idString = customer.getId().toString();
+		UpdateRequest updateReq = new UpdateRequest(indexName, indexName, idString);
+		Script inline = new Script(ScriptType.INLINE, "painless", "ctx._source.age += 1", new HashMap<>(2));
+		updateReq.script(inline);
+
+		UpdateResponse updateResponse = highLevelClient.update(updateReq, RequestOptions.DEFAULT);
+		System.err.println(updateResponse);
+	}
+
+	@Test
+	void testBulk() throws Exception {
+
+		BulkRequest bulkReq = new BulkRequest();
+		Script inline = new Script(ScriptType.INLINE, "painless", "ctx._source.age += 1", new HashMap<>(2));
+		String indexName = "customer";
+
+		UpdateRequest updateReq = new UpdateRequest(indexName, indexName, "1");
+		updateReq.script(inline);
+		bulkReq.add(updateReq);
+
+		UpdateRequest updateReq1 = new UpdateRequest(indexName, indexName, "2");
+		updateReq1.script(inline);
+		bulkReq.add(updateReq1);
+
+		BulkResponse bulkResponse = highLevelClient.bulk(bulkReq, RequestOptions.DEFAULT);
+		assertNotNull(bulkResponse);
+		System.err.println(bulkResponse);
+
+		for (BulkItemResponse bulkItemResponse : bulkResponse.getItems()) {
+			System.err.println(bulkItemResponse);
+		}
 	}
 
 }

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.annotation.Resource;
+
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
@@ -30,6 +32,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import toby.es.test.dao.entity.Customer;
 
 @Service
@@ -37,6 +41,8 @@ public class CustomerServiceImpl {
 
 	@Autowired
 	private RestHighLevelClient highLevelClient;
+	@Resource
+	private ObjectMapper objectMapper;
 
 	public static final String CUSTOMER_INDEX_NAME = "customer";
 
@@ -88,6 +94,7 @@ public class CustomerServiceImpl {
 				customer.getId().toString());
 		indexRequest.source(map);
 		indexRequest.versionType(VersionType.INTERNAL);
+//		indexRequest.source(objectMapper.writeValueAsString(customer), XContentType.JSON);
 
 		return highLevelClient.index(indexRequest, RequestOptions.DEFAULT);
 	}
