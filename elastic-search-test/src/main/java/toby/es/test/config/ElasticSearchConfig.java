@@ -18,11 +18,13 @@ public class ElasticSearchConfig {
 		HttpHost httpHost = new HttpHost("127.0.0.1", 9200, HTTP_SCHEME);
 		return RestClient.builder(httpHost);
 	}
-	
+
 	@Bean
 	public RestHighLevelClient restHighLevelClient(RestClientBuilder restClientBuilder) {
-		
+
 		restClientBuilder.setMaxRetryTimeoutMillis(60000);
+		restClientBuilder.setRequestConfigCallback(
+				requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000).setSocketTimeout(60000));
 		return new RestHighLevelClient(restClientBuilder);
 	}
 }

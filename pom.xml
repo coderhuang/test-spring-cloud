@@ -6,10 +6,11 @@
 	<artifactId>test-spring-cloud</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	
+
 	<modules>
 		<module>gate-way-test</module>
 		<module>elastic-search-test</module>
+		<module>resillence4j-test</module>
 	</modules>
 
 	<properties>
@@ -177,9 +178,15 @@
 				<version>6.4.3</version>
 			</dependency>
 
+			<!-- https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-circuitbreaker -->
+			<dependency>
+				<groupId>io.github.resilience4j</groupId>
+				<artifactId>resilience4j-circuitbreaker</artifactId>
+				<version>1.6.1</version>
+			</dependency>
 
 
 		</dependencies>
 	</dependencyManagement>
-	
+
 </project>
