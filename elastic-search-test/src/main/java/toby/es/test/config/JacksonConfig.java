@@ -9,11 +9,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-/**
- * @author huangzhongjun
- * @date 2020年11月13日
- * @description 
- */
 @Configuration
 public class JacksonConfig {
 

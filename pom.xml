@@ -21,6 +21,7 @@
 		<spring-boot.version>2.1.15.RELEASE</spring-boot.version>
 		<spring-cloud.version>Greenwich.SR3</spring-cloud.version>
 		<spring-kafka.version>2.2.13.RELEASE</spring-kafka.version>
+		<spring-amqp.version>2.2.12.RELEASE</spring-amqp.version>
 		<project.version>0.0.1-SNAPSHOT</project.version>
 
 	</properties>
@@ -185,6 +186,23 @@
 				<version>2.0.0</version>
 			</dependency>
 
+
+			<dependency>
+				<groupId>org.springframework.amqp</groupId>
+				<artifactId>spring-amqp</artifactId>
+				<version>${spring-amqp.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.amqp</groupId>
+				<artifactId>spring-rabbit</artifactId>
+				<version>${spring-amqp.version}</version>
+				<exclusions>
+					<exclusion>
+						<artifactId>http-client</artifactId>
+						<groupId>com.rabbitmq</groupId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>
